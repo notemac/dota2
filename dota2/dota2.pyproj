@@ -5,7 +5,7 @@
     <ProjectGuid>e4f93991-654e-4e37-a1a5-f56055415a57</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>d2db.py</StartupFile>
+    <StartupFile>d2parser.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

@@ -85,6 +85,8 @@ def updateTop500SoloMMR(inOutFile):
   cursor.close()
   db.close()
 
+
+
 #updateTop500SoloMMR('./assets/top500solommr.txt')
 #insertHeroes(db, './assets/heroes.txt')
 #insertTop500SoloMMR(db, './assets/top500solommr.txt')
