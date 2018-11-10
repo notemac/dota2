@@ -66,17 +66,17 @@ def updateTop500SoloMMR(inOutFile):
   d2parser.parseTop500SoloMMR(inOutFile)
   addData = getDataForUpdateTop500SoloMMR(inOutFile)
   # список addID содержит только ID игроков
-  addID, deleteData = [data[0] for data in addData], []
+  addID, deleteID = [data[0] for data in addData], []
   db = connectDB(DB_CONFIG)
   # Находим игроков, которые уже не входят в топ-500
   cursor = selectTop500SoloMMR(db)
   for (playerID,) in cursor: 
     if playerID not in addID: # type(playerID) == Integer
-      deleteData.append((playerID,))
+      deleteID.append((playerID,))
   # Удаляем этих игроков
-  if (len(deleteData) > 0):
+  if (len(deleteID) > 0):
     query = ('DELETE FROM top500_solo_mmr WHERE player_id = %s')
-    cursor.executemany(query, deleteData)
+    cursor.executemany(query, deleteID)
     db.commit()
   #Обновляем таблицу top500_solo_mmr (INSERT IGNORE для пропуска дубликатов)
   query = ('INSERT IGNORE INTO top500_solo_mmr (player_id, player_name) VALUES(%s, %s)')

@@ -44,6 +44,19 @@ def parseTop500SoloMMR(outputFile):
     file.writelines('\n'.join(players))
   print('parseTop500SoloMMR(outputFile) completed')
 
+# Парсит название команды и дату основания
+def parseTeamNameAndFounded(teamID):
+  url = 'https://www.dotabuff.com/esports/teams/'
+  r = requests.get(url + str(teamID), headers=HEADERS)
+  soup = BeautifulSoup(r.text, features='html.parser')
+  #<div>class="header-content-title"><h1>Virtus Pro<small>Summary</small></h1></div>
+  div = soup.find('div', {'class': 'header-content-title'})
+  name = div.h1.contents[0]
+  #datetime="2018-09-06T04:55:39+00:00"
+  date = soup.find('div', {'class': 'header-content-secondary'}).find('time')
+  founded = date['datetime'].replace('T', ' ').rpartition('+')[0]
+  return [name, founded]
+
 # Парсит самые популярные команды с www.dotabuff.com и www.opendota.com
 def parseTeams():
   # STEP 1
@@ -57,25 +70,36 @@ def parseTeams():
   for a in soup.findAll('a', {'class': 'esports-team large esports-link team-link'}):
     id, name = a['href'].rpartition('/')[2].partition('-')[0], a('span')[1].text
     teamsID.append(id)
-  teamsID = list(set(teamsID)) # Удаляем лишние/повторные записи
+  # Удаляем каждую вторую повторную запись
+  teamsID = [teamsID[i] for i in range(0, len(teamsID), 2)]
   # Парсим DPC-points за 2017-2018 сезон
   # <td class="large" data-value="1250.30"></td>
-  points = []
+  points1718 = []
   for td in soup.findAll('td', {'class': 'large'}):
-    points.append(int(float(td['data-value'])))
+    points1718.append(str(int(float(td['data-value']))))
   # Парсим название команды и дату основания
-  url = 'https://www.dotabuff.com/esports/teams/'
+  names, founded = [], []
   for id in teamsID:
-      r = requests.get(url + str(id), headers=HEADERS)
-      soup = BeautifulSoup(r.text, features='html.parser')
-  print(len(teamsID), len(points))
+    pair = parseTeamNameAndFounded(id)
+    names.append(pair[0])
+    founded.append(pair[1])
+    print(pair)
+  # DPC-points за текущий сезон
+  points1819 = len(points1718)*['0']
+  with open('./assets/teams1.txt', mode='w', encoding='utf-8') as file:
+    for i in range(0, len(points1819)):
+      file.write(teamsID[i] + '\n')
+      file.write(names[i] + '\n')
+      file.write(points1819[i] + '\n')
+      file.write(points1718[i] + '\n')
+      file.write(founded[i] + '\n')
   
 
   # STEP 2
   # Team Elo Rankings
   url = 'https://www.opendota.com/teams'
   driver = webdriver.Chrome('D:\\programFiles\\chromedriver.exe') 
-  driver.implicitly_wait(10) # time.sleep(10) to wait page loading
+  driver.implicitly_wait(10) # time.sleep(10) 10 секунд а щагрузку страницы
   driver.get('https://www.opendota.com/teams');
   textHtml = driver.page_source
   driver.quit()
@@ -89,6 +113,8 @@ def parseTeams():
 
   #https://www.dotabuff.com/procircuit/team-standings
   #https://www.dotabuff.com/esports/teams
+
+
 
 parseTeams()
 #parseHeroes('./assets/heroes.txt')
