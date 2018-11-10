@@ -8,16 +8,17 @@ logging.basicConfig(format='%(asctime)s %(levelname)s: file db.py: %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p',
                     filename='logs.txt', level=logging.DEBUG)
 
-DB_CONFIG = {
-  'user': 'root',
-  'password': '',
-  'host': '127.0.0.1',
-  'database': 'dota2scoring',
-  'raise_on_warnings': False
-}
+
 
 # Подключение к БД
-def connectDB(config):
+def connectDB():
+  config = {
+    'user': 'root',
+    'password': '',
+    'host': '127.0.0.1',
+    'database': 'dota2scoring',
+    'raise_on_warnings': False 
+  }
   try:
     db = mysql.connector.connect(**config)
   except mysql.connector.Error as err:
@@ -25,6 +26,8 @@ def connectDB(config):
     os._exit(1)
   else:
     return db
+  return None
+
 
 # Заполняем таблицу heroes
 # Таблиц heroes содержит информацию о героях
@@ -67,7 +70,7 @@ def updateTop500SoloMMR(inOutFile):
   addData = getDataForUpdateTop500SoloMMR(inOutFile)
   # список addID содержит только ID игроков
   addID, deleteID = [data[0] for data in addData], []
-  db = connectDB(DB_CONFIG)
+  db = connectDB()
   # Находим игроков, которые уже не входят в топ-500
   cursor = selectTop500SoloMMR(db)
   for (playerID,) in cursor: 
@@ -85,8 +88,31 @@ def updateTop500SoloMMR(inOutFile):
   cursor.close()
   db.close()
 
+# Заполняем таблицу teams
+def insertTeams(inputFile):
+  teams = []
+  with open(inputFile, mode='r', encoding='utf-8') as file:
+    lines = file.readlines()
+    for i in range(0, len(lines), 5):
+      teams.append(tuple([line.strip() for line in lines[i:i+5]])) 
 
+  db = connectDB()
+  cursor = db.cursor()
+  query = ('INSERT IGNORE INTO teams (id, name, dcp1819_points, dcp_points, founded) '
+            'VALUES(%s, %s, %s, %s, %s)')
+  cursor.executemany(query, teams)
+  db.commit()
+  cursor.close()
+  db.close()
 
+# Получаем все id из таблицы teams
+def selectTeamsIDName(db, bufferedCursor):
+  query = ('SELECT id, name FROM teams')
+  cursor = db.cursor(buffered=bufferedCursor)
+  cursor.execute(query)
+  return cursor
+
+#insertTeams('./assets/teams9.txt')
 #updateTop500SoloMMR('./assets/top500solommr.txt')
 #insertHeroes(db, './assets/heroes.txt')
 #insertTop500SoloMMR(db, './assets/top500solommr.txt')

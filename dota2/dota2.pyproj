@@ -5,7 +5,7 @@
     <ProjectGuid>e4f93991-654e-4e37-a1a5-f56055415a57</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>d2parser.py</StartupFile>
+    <StartupFile>d2utils.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -26,6 +26,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="d2parser.py" />
+    <Compile Include="d2utils.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
