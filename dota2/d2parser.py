@@ -211,6 +211,7 @@ def parseTeamRecord(teamID):
   record = int(soup.contents[0].text.replace(',', '')) + int(soup.contents[2].text)
   return record
 
+# Парсит дату последнего матча команды
 def parseTeamLastMatchDate(teamID):
   url = 'https://www.dotabuff.com/esports/teams/'
   r = requests.get(url + str(teamID) + '/matches', headers=HEADERS)
@@ -220,10 +221,100 @@ def parseTeamLastMatchDate(teamID):
   date = span.time['datetime'].replace('T', ' ').rpartition('+')[0]
   return date
 
+# Парсит Gold Per Minute для обеих команд в матче
+def parseMatchGPM(matchID):
+  url = 'https://www.dotabuff.com/matches/'
+  r = requests.get(url + str(matchID) + '/farm', headers=HEADERS)
+  soup = BeautifulSoup(r.text, features='html.parser')
+  # блок farm
+  div = soup.find('div', {'class': 'match-show'})
+  # блок сил света
+  section = div.find('section', {'class': 'radiant'})
+  tr = section.find('article', {'class': 'r-tabbed-table'}).find('tfoot').find('tr')
+  gpm1 =  tr.contents[5].contents[0].replace(',', '')
+  # блок сил тьмы
+  section = div.find('section', {'class': 'dire'})
+  tr = section.find('article', {'class': 'r-tabbed-table'}).find('tfoot').find('tr')
+  gpm2 =  tr.contents[5].contents[0].replace(',', '')
+  return [gpm1, gpm2]
+
+def parseMatchDetails(matchID):
+  url = 'https://www.dotabuff.com/matches/'
+  r = requests.get(url + str(matchID), headers=HEADERS)
+  soup = BeautifulSoup(r.text, features='html.parser')
+  # блок с данными о матче
+  div = soup.find('div', {'class': 'team-results'})
+  radiant = div.find('section', {'class': 'radiant'}) # блок сил света
+  dire = div.find('section', {'class': 'dire'}) # блок сил тьмы
+  rowsRadiant = radiant.find('article', {'class': 'r-tabbed-table'}).find('tbody').findAll('tr')
+  rowsDire = dire.find('article', {'class': 'r-tabbed-table'}).find('tbody').findAll('tr')
+  gpm = parseMatchGPM(matchID)
+  wplayers, lplayers, wheroes, lheroes = [], [], [], []
+  if len(radiant.header.contents) > 1: #значит силы света победили
+    wgpm, lgpm = gpm[0], gpm[1]
+    for tr in rowsRadiant:
+      #<tr class="col-hints faction-radiant player-86715129">
+      wplayers.append(tr['class'][2].partition('-')[2]) #player id
+      #<a href="/heroes/winter-wyvern">
+      wheroes.append(tr.contents[0].div.a['href'].rpartition('/')[2])
+    for tr in rowsDire:
+      lplayers.append(tr['class'][2].partition('-')[2])
+      lheroes.append(tr.contents[0].div.a['href'].rpartition('/')[2])
+  else:
+    wgpm, lgpm = gpm[1], gpm[0]
+    for tr in rowsRadiant:
+      lplayers.append(tr['class'][2].partition('-')[2])
+      lheroes.append(tr.contents[0].div.a['href'].rpartition('/')[2])
+    for tr in rowsDire:
+      wplayers.append(tr['class'][2].partition('-')[2])
+      wheroes.append(tr.contents[0].div.a['href'].rpartition('/')[2])
+  return wplayers, lplayers, wheroes, lheroes, wgpm, lgpm
+
+
+
+
+def parseTeamMatches(teamID):
+  url = 'https://www.dotabuff.com/esports/teams/'
+  r = requests.get(url + str(teamID) + '/matches', headers=HEADERS)
+  soup = BeautifulSoup(r.text, features='html.parser')
+  #<div class="viewport">1 - 20 of 1717</div>
+  record = int(soup.find('div', {'class': 'viewport'}).text.rpartition(' ')[2])
+  pagesCount = 1 # кол-во страниц с матчами
+  if int(record) > 20:
+    pagesCount = int(record/20) + 1
+  #for page in range(0, pagesCount):
+  for page in range(0, 1):
+    # Таблица с матчами на текущей странице
+    #<table class="table table-striped recent-esports-matches">
+    table = soup.find('table', {'class': 'table table-striped recent-esports-matches'})
+    tbody = table.find('tbody')
+    rows = tbody.findAll('tr')
+    for tr in rows:
+      # пропускаем неоконченные игры
+      if tr.has_attr('class'): #<tr class="inactive">
+        continue
+      #<a class="won" href="/matches/4103964624">Won Match</a>
+      matchID = tr.contents[1].div.a['href'].rpartition('/')[2]
+      result = tr.contents[1].div.a['class'] #won/lost
+      #<time datetime="2018-09-06T22:50:03+00:00">
+      date = tr.contents[1].span.time['datetime'].replace('T', ' ').rpartition('+')[0]
+      # извлекаем id команды соперника
+      a = tr.contents[5].find('a')
+      opponent = '0' # неизвестная команда (Unknown)
+      if a is not None:
+        #href="/esports/teams/4482169-incubus-gaming"
+        opponent = a['href'].partition('-')[0].rpartition('/')[2]
+      # длительность матча
+      duration = tr.contents[3].text
+      # победитель
+      winner = (teamID if (result == 'won') else opponent)
+      loser = (teamID if (winner != teamID) else opponent)
+      wplayers, lplayers, wheroes, lheroes, wgpm, lgpm = parseMatchDetails(matchID)
 
 # main     
 def main():
-  parseTeamLastMatchDate(1838315)
+  parseTeamMatches('6196091')
+  #parseTeamLastMatchDate(1838315)
 
 #main()
 #parseTeams('./assets/teams9.txt')

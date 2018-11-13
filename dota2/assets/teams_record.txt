@@ -1,9 +1,3 @@
-1 Team Siege 5002984
-1 Team Taka 5048443
-1 All Star B 6143737
-2 All Star A 6143735
-3 Samurai Champlo0 2.0 2762342
-5 my gurl alicia 2920471
 5 Midas Club Young 5045488
 5 KPV GAMING 6299192
 6 ROOONS 6268594
@@ -35,7 +29,6 @@
 17 WP Gaming 6187109
 17 NoPangolier 6298307
 17 Team Poseidon 6324297
-19 STEAK GAMING 2633773
 19 Team Russia 5270154
 19 20 min afk les 5897750
 20 TEAM TEAM 6196091
@@ -49,7 +42,6 @@
 30 Troublemakers 6268049
 30 J.Storm 6288801
 32 Immortals 5040783
-33 Team Redemption` 2099436
 33 Midas Club 5587909
 33 MangoBay 6187923
 33 Forward Gaming 6214538
@@ -63,7 +55,6 @@
 40 Wind and Rain 5725202
 42 Royal Never Give Up 6209804
 42 paiN  X 6214618
-45 Summary 2642725
 45 Double Dimension 5528539
 46 Kingdra 2786652
 48 Evil Corporation 5054122
@@ -89,7 +80,6 @@
 71 Newbee.M 5084724
 74 Tigers 6187627
 75 New Guys 534136
-75 COOKISS 1449413
 75 Inaequalis – Animus 5326189
 76 Ten Twenty 4424013
 76 No Creativity 4988859
@@ -114,7 +104,6 @@
 105 Hippomaniacs 3214090
 105 Espada 5680524
 107 Sun Gaming 5036221
-108 Noo Logic Gaming 2535294
 113 Skyville! 2687313
 113 PG.Barracx 3265632
 113 Aurora Esports club 5259051
@@ -126,14 +115,12 @@
 127 Sterling Global Dragons 5896332
 128 STARS e-Sports 4324365
 128 Sacred 5028043
-132 Team Archon 2244697
 133 Team Serenity 5066616
 134 Unchained Esports 5242529
 135 BLUE PIKACHU 5020794
 137 VGJ Storm 5228654
 139 YoungMinds 3763318
 148 VGJ.Storm 5028104
-150 Exodus 2634364
 160 Veteran 4259604
 160 Signify 5138280
 164 Entity Gaming 4369633
@@ -144,19 +131,16 @@
 172 Natural 9 3325212
 173 Burden United 2197847
 175 Immortals 5051649
-180 Shazam~ 2640099
 183 Gorillaz-Pride 5055770
 189 Team HighGround 3260216
 190 Nemiga Gaming 5014799
 192 Eclipse 4425650
-193 Mamas-Boys 2276247
 204 BOOM ID 3785359
 211 ALPHA Red 5031582
 212 The Final Tribe 5059375
 223 Infamous 5065748
 227 Team Freedom Dota 2 2701329
 228 TSHOW RISING 2527544
-229 Faceless 3326875
 231 Team Kinguin 5039050
 234 Midas Club 3477208
 236 Team Singularity 4541043
@@ -168,31 +152,24 @@
 320 Black Sheep! 1366506
 321 Happy  Feet 3725701
 335 Fantastic Five 2538753
-339 Team AD FINEM 2642171
 343 KG.Luminous 2634810
 343 OpTic Gaming 5026801
-356 Elite Wolves D2-gg 2428289
-372 Sneaky Nyx Assassins 1453020
-383 Leviathan' 1276923
 391 Wheel Whreck While Whistling 1905619
 395 Clutch Gamers 3659536
 404 Kaipi 59
 423 GangSquad 3704482
 444 Elements Pro Gaming 2537636
 447 Effect 2790766
-448 Prodota Gaming 2552670
 458 HellRaisers 1846548
 489 LGD.Forever Young 3331948
 507 Infamous Gaming 2672298
 511 WarriorsGaming.Unity 2659468
 554 Digital Chaos 2512249
-555 First Departure 254140
 624 Team. Spirit 2621843
 651 KEEN GAMING 2626685
 655 paiN Gaming 67
 666 iG.Vitality 2640025
 700 OG 2586976
-703 MVP Phoenix 1148284
 758 mousesports 26
 783 Execration.安博电竞 2581813
 822 Newbee.Young 1951061
@@ -200,12 +177,10 @@
 945 Team Secret 1838315
 946 CDEC 1520578
 950 Newbee.mgb 20
-967 Trust 24
 1004 EHOME 4
 1052 Vega Squadron 2006913
 1102 Virtus.pro 1883502
 1126 compLexity Gaming 3
-1201 _PowerRangers 55
 1297 Team Liquid 2163
 1368 Newbee 1375614
 1398 Mineski 543897
