@@ -106,11 +106,24 @@ def insertTeams(inputFile):
   db.close()
 
 # Получаем все id из таблицы teams
-def selectTeamsIDName(db, bufferedCursor):
+def selectTeamsIDName(db, bufferedCursor=False):
   query = ('SELECT id, name FROM teams')
   cursor = db.cursor(buffered=bufferedCursor)
   cursor.execute(query)
   return cursor
+
+# Таблица matches содержит инф-цию о матчах
+def insertMatch(db, matchDetails):
+  cursor = db.cursor()
+  query = ('INSERT IGNORE INTO matches (id, winner, wp1, wp2, wp3, wp4, wp5, wh1, wh2, wh3, wh4, wh5, '
+            'loser, lp1, lp2, lp3, lp4, lp5, lh1, lh2, lh3, lh4, lh5, wgpm, lgpm, date, duration) '
+            'VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, '
+            '%s, %s, %s, %s, %s, %s, %s)')
+  cursor.execute(query, matchDetails)
+  db.commit()
+  cursor.close()
+
+
 
 #insertTeams('./assets/teams9.txt')
 #updateTop500SoloMMR('./assets/top500solommr.txt')

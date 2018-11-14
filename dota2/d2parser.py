@@ -221,11 +221,24 @@ def parseTeamLastMatchDate(teamID):
   date = span.time['datetime'].replace('T', ' ').rpartition('+')[0]
   return date
 
+
+
+# Парсит общее количество сыгранных матчей командой доступных для просмотра
+def parseTeamMatchesRecord(teamID):
+  url = 'https://www.dotabuff.com/esports/teams/'
+  r = requests.get(url + str(teamID) + '/matches', headers=HEADERS)
+  soup = BeautifulSoup(r.text, features='html.parser')
+  #<div class="viewport">1 - 20 of 1717</div>
+  record = int(soup.find('div', {'class': 'viewport'}).text.rpartition(' ')[2])
+  return record
+
 # Парсит Gold Per Minute для обеих команд в матче
 def parseMatchGPM(matchID):
   url = 'https://www.dotabuff.com/matches/'
   r = requests.get(url + str(matchID) + '/farm', headers=HEADERS)
   soup = BeautifulSoup(r.text, features='html.parser')
+  if 'Not Found' in soup.html.head.title.text:
+    return ['0', '0']
   # блок farm
   div = soup.find('div', {'class': 'match-show'})
   # блок сил света
@@ -270,50 +283,43 @@ def parseMatchDetails(matchID):
       wheroes.append(tr.contents[0].div.a['href'].rpartition('/')[2])
   return wplayers, lplayers, wheroes, lheroes, wgpm, lgpm
 
-
-
-
-def parseTeamMatches(teamID):
+# Парсит список матчей на странице
+def parseMatchesOnPage(teamID, page):
   url = 'https://www.dotabuff.com/esports/teams/'
-  r = requests.get(url + str(teamID) + '/matches', headers=HEADERS)
+  r = requests.get(url + str(teamID) + '/matches', params={'page': page}, headers=HEADERS)
   soup = BeautifulSoup(r.text, features='html.parser')
-  #<div class="viewport">1 - 20 of 1717</div>
-  record = int(soup.find('div', {'class': 'viewport'}).text.rpartition(' ')[2])
-  pagesCount = 1 # кол-во страниц с матчами
-  if int(record) > 20:
-    pagesCount = int(record/20) + 1
-  #for page in range(0, pagesCount):
-  for page in range(0, 1):
-    # Таблица с матчами на текущей странице
-    #<table class="table table-striped recent-esports-matches">
-    table = soup.find('table', {'class': 'table table-striped recent-esports-matches'})
-    tbody = table.find('tbody')
-    rows = tbody.findAll('tr')
-    for tr in rows:
-      # пропускаем неоконченные игры
-      if tr.has_attr('class'): #<tr class="inactive">
-        continue
-      #<a class="won" href="/matches/4103964624">Won Match</a>
-      matchID = tr.contents[1].div.a['href'].rpartition('/')[2]
-      result = tr.contents[1].div.a['class'] #won/lost
-      #<time datetime="2018-09-06T22:50:03+00:00">
-      date = tr.contents[1].span.time['datetime'].replace('T', ' ').rpartition('+')[0]
-      # извлекаем id команды соперника
-      a = tr.contents[5].find('a')
-      opponent = '0' # неизвестная команда (Unknown)
-      if a is not None:
-        #href="/esports/teams/4482169-incubus-gaming"
-        opponent = a['href'].partition('-')[0].rpartition('/')[2]
-      # длительность матча
-      duration = tr.contents[3].text
-      # победитель
-      winner = (teamID if (result == 'won') else opponent)
-      loser = (teamID if (winner != teamID) else opponent)
-      wplayers, lplayers, wheroes, lheroes, wgpm, lgpm = parseMatchDetails(matchID)
+  # Таблица с матчами на текущей странице
+  #<table class="table table-striped recent-esports-matches">
+  table = soup.find('table', {'class': 'table table-striped recent-esports-matches'})
+  tbody = table.find('tbody')
+  return tbody.findAll('tr')
+
+def parseMatchOverview(teamID, tr):
+  #<a class="won" href="/matches/4103964624">Won Match</a>
+  matchID = tr.contents[1].div.a['href'].rpartition('/')[2]
+  # WTF: tr.contents[1].div.a['class'] returns LIST but not STRING
+  result = tr.contents[1].div.a['class'][0] #won/lost
+  #<time datetime="2018-09-06T22:50:03+00:00">
+  date = tr.contents[1].span.time['datetime'].replace('T', ' ').rpartition('+')[0]
+  # извлекаем id команды соперника
+  a = tr.contents[5].find('a')
+  opponent = '0' # неизвестная команда (Unknown)
+  if a is not None:
+    #href="/esports/teams/4482169-incubus-gaming"
+    opponent = a['href'].partition('-')[0].rpartition('/')[2]
+  # длительность матча
+  duration = tr.contents[3].text
+  if duration.count(':') == 1:
+    duration = '00:' + duration
+  # победитель
+  winner = (teamID if (result == 'won') else opponent)
+  loser = (teamID if (winner != teamID) else opponent)
+  return matchID, date, duration, winner, loser
 
 # main     
 def main():
-  parseTeamMatches('6196091')
+  soup, record = parseTeamMatchesRecord('6196091')
+  a = 10
   #parseTeamLastMatchDate(1838315)
 
 #main()

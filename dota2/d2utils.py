@@ -42,5 +42,31 @@ def getTeamsRecord():
   db.close()
 
 
+def updateMatches(teamID, startPage):
+  print('teamID: ', teamID)
+  record = d2parser.parseTeamMatchesRecord(teamID)
+  # кол-во страниц с матчами
+  pagesCount = int(record/20) + 1
+  db = d2db.connectDB()
+  for page in range(startPage, pagesCount+1):
+    print('page: ', page)
+    # список матчей на странице
+    tableRows = d2parser.parseMatchesOnPage(teamID, page)
+    time.sleep(0.5) # PAUSE
+    for tr in tableRows:
+      # пропускаем незасчитанные игры
+      if tr.has_attr('class'): #<tr class="inactive">
+        continue
+      matchID, date, duration, winner, loser = d2parser.parseMatchOverview(teamID, tr)
+      print('matchID: ', matchID)
+      time.sleep(0.5) # PAUSE
+      wplayers, lplayers, wheroes, lheroes, wgpm, lgpm = d2parser.parseMatchDetails(matchID)
+      matchDetails = (matchID, winner, *tuple(wplayers), *tuple(wheroes), 
+                      loser, *tuple(lplayers), *tuple(lheroes), wgpm, lgpm, date, duration)
+      d2db.insertMatch(db, matchDetails)
+  db.close()
+
+#updateMatches('5034643', 4) #Midas Club Victory
+
 #getTeamsRecord()
 #getTeamsRecord()
