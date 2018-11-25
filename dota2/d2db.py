@@ -4,9 +4,9 @@ import mysql.connector
 from mysql.connector import errorcode
 import d2parser
 
-logging.basicConfig(format='%(asctime)s %(levelname)s: file db.py: %(message)s', 
-                    datefmt='%m/%d/%Y %I:%M:%S %p',
-                    filename='logs.txt', level=logging.DEBUG)
+#logging.basicConfig(format='%(asctime)s %(levelname)s: file db.py: %(message)s', 
+#                    datefmt='%m/%d/%Y %I:%M:%S %p',
+#                    filename='logs.txt', level=logging.DEBUG)
 
 
 
@@ -19,14 +19,8 @@ def connectDB():
     'database': 'dota2scoring',
     'raise_on_warnings': False 
   }
-  try:
-    db = mysql.connector.connect(**config)
-  except mysql.connector.Error as err:
-    logging.error(err.msg)
-    os._exit(1)
-  else:
-    return db
-  return None
+  db = mysql.connector.connect(**config)
+  return db
 
 
 # Заполняем таблицу heroes
@@ -48,15 +42,6 @@ def insertHeroes(db, inputFile):
   print('insertHeroes(db, inputFile) completed')
 
 
-def getDataForUpdateTop500SoloMMR(inputFile):
-  data = []
-  with open(inputFile, mode='r', encoding='utf-8') as file:
-    for line in file:
-      #Если line = "154715080 Fnatic.Abed", то parts[0] = 154715080 и parts[2] = "Fnatic.Abed"
-      parts = line.strip().partition(' ');
-      data.append((int(parts[0]), parts[2]))
-  return data
-
 # Получаем все player_id из таблицы top500_solo_mmr
 def selectTop500SoloMMR(db):
   query = ('SELECT player_id FROM top500_solo_mmr')
@@ -64,29 +49,27 @@ def selectTop500SoloMMR(db):
   cursor.execute(query)
   return cursor
 
-# Обновляем таблицу top500_solo_mmr
-def updateTop500SoloMMR(inOutFile):
-  d2parser.parseTop500SoloMMR(inOutFile)
-  addData = getDataForUpdateTop500SoloMMR(inOutFile)
-  # список addID содержит только ID игроков
-  addID, deleteID = [data[0] for data in addData], []
-  db = connectDB()
-  # Находим игроков, которые уже не входят в топ-500
-  cursor = selectTop500SoloMMR(db)
-  for (playerID,) in cursor: 
-    if playerID not in addID: # type(playerID) == Integer
-      deleteID.append((playerID,))
-  # Удаляем этих игроков
-  if (len(deleteID) > 0):
-    query = ('DELETE FROM top500_solo_mmr WHERE player_id = %s')
-    cursor.executemany(query, deleteID)
-    db.commit()
-  #Обновляем таблицу top500_solo_mmr (INSERT IGNORE для пропуска дубликатов)
-  query = ('INSERT IGNORE INTO top500_solo_mmr (player_id, player_name) VALUES(%s, %s)')
-  cursor.executemany(query, addData)
+# Получаем всех героев из таблицы heroes
+def selectHeroes(db, bufferedCursor):
+  query = ('SELECT name FROM heroes')
+  cursor = db.cursor(bufferedCursor)
+  cursor.execute(query)
+  return cursor
+
+def deleteTop500SoloMMRPlayers(db, playersID):
+  cursor = db.cursor()
+  query = ('DELETE FROM top500_solo_mmr WHERE player_id = %s')
+  cursor.executemany(query, playersID)
   db.commit()
   cursor.close()
-  db.close()
+
+# Обновляем таблицу top500_solo_mmr
+def insertTop500SoloMMR(db, playersInfo):
+  cursor = db.cursor()
+  query = ('INSERT IGNORE INTO top500_solo_mmr (player_id, player_name) VALUES(%s, %s)')
+  cursor.executemany(query, playersInfo)
+  db.commit()
+  cursor.close()
 
 # Заполняем таблицу teams
 def insertTeams(inputFile):
@@ -123,7 +106,13 @@ def insertMatch(db, matchDetails):
   db.commit()
   cursor.close()
 
-
+def insertHeroCounters(db, hero, counters):
+  cursor = db.cursor()
+  query = ('INSERT INTO counters (hero, counters) VALUES(%s, %s)')
+  for counter in counters:
+    cursor.execute(query, (hero, counter))
+  db.commit()
+  cursor.close()
 
 #insertTeams('./assets/teams9.txt')
 #updateTop500SoloMMR('./assets/top500solommr.txt')

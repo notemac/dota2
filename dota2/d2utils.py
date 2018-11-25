@@ -3,7 +3,6 @@
 import time
 import d2db
 import d2parser
-
 # date = "2018-11-09 06:40:23"
 def dateToTimestamp(date):
   parts = date.partition('-')
@@ -41,8 +40,38 @@ def getTeamsRecord():
   cursor.close()
   db.close()
 
+def getDataForUpdateTop500SoloMMR(inputFile):
+  data = []
+  with open(inputFile, mode='r', encoding='utf-8') as file:
+    for line in file:
+      #Если line = "154715080 Fnatic.Abed", то parts[0] = 154715080 и parts[2] = "Fnatic.Abed"
+      parts = line.strip().partition(' ');
+      data.append((int(parts[0]), parts[2]))
+  return data
+
+# Обновляем таблицу top500_solo_mmr
+def updateTop500SoloMMR(inOutFile):
+  d2parser.parseTop500SoloMMR(inOutFile)
+  playersInfo = getDataForUpdateTop500SoloMMR(inOutFile)
+  # список addID содержит только ID игроков
+  addID, deleteID = [info[0] for info in playersInfo], []
+  db = d2db.connectDB()
+  # Находим игроков, которые уже не входят в топ-500
+  cursor = d2db.selectTop500SoloMMR(db)
+  for (playerID,) in cursor: 
+    if playerID not in addID: # type(playerID) == Integer
+      deleteID.append((playerID,))
+  cursor.close()
+   # Удаляем этих игроков
+  if (len(deleteID) > 0):
+    d2db.deleteTop500SoloMMRPlayers(db, deleteID)
+  #Обновляем таблицу top500_solo_mmr
+  d2db.insertTop500SoloMMR(db, playersInfo)
+  db.close()
 
 def updateMatches(teamID, startPage):
+  START_TIMESTAMP = dateToTimestamp('2016-05-01 00:00:00') # 2017-03-09 00:00:00 Начало киевского мейджора
+  isStop = False
   print('teamID: ', teamID)
   record = d2parser.parseTeamMatchesRecord(teamID)
   # кол-во страниц с матчами
@@ -52,21 +81,49 @@ def updateMatches(teamID, startPage):
     print('page: ', page)
     # список матчей на странице
     tableRows = d2parser.parseMatchesOnPage(teamID, page)
-    time.sleep(0.5) # PAUSE
+    time.sleep(2.5) # PAUSE
     for tr in tableRows:
       # пропускаем незасчитанные игры
       if tr.has_attr('class'): #<tr class="inactive">
+        print('Inactive game')
         continue
       matchID, date, duration, winner, loser = d2parser.parseMatchOverview(teamID, tr)
       print('matchID: ', matchID)
-      time.sleep(0.5) # PAUSE
-      wplayers, lplayers, wheroes, lheroes, wgpm, lgpm = d2parser.parseMatchDetails(matchID)
+      if dateToTimestamp(date) < START_TIMESTAMP:
+        print('Stopped:' + date)
+        isStop = True
+        break
+      time.sleep(3) # PAUSE
+      try:
+        wplayers, lplayers, wheroes, lheroes, wgpm, lgpm = d2parser.parseMatchDetails(matchID)
+      except Exception as exc: # некорректный матч: https://www.dotabuff.com/matches/2962623862
+        print(exc.args)
+      # Пропускаем некорректные игры. Пример: https://www.dotabuff.com/matches/3012665523
+      if (len(wplayers) < 5) or (len(lplayers) < 5):
+        print('Incorrect game')
+        continue
       matchDetails = (matchID, winner, *tuple(wplayers), *tuple(wheroes), 
                       loser, *tuple(lplayers), *tuple(lheroes), wgpm, lgpm, date, duration)
       d2db.insertMatch(db, matchDetails)
+    if isStop:
+      break
   db.close()
 
-#updateMatches('5034643', 4) #Midas Club Victory
+
+def insertCounters():
+  db = d2db.connectDB()
+  cursor = d2db.selectHeroes(db, bufferedCursor=True)
+  for (hero,) in cursor:
+    print(hero)
+    counters = d2parser.parseHeroCounters(hero)
+    print(counters)
+    d2db.insertHeroCounters(db, hero, counters)
+    time.sleep(0.5)
+  cursor.close()
+  db.close()
+    
+#updateTop500SoloMMR('./assets/top500solommr.txt')
+updateMatches('2512249', startPage=1)
 
 #getTeamsRecord()
 #getTeamsRecord()

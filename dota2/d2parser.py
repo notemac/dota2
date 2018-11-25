@@ -1,5 +1,5 @@
 import re
-#import time
+import time
 import requests
 from bs4 import BeautifulSoup
 # Для парсинга динамически подгружаемых страниц используем модуль selenium + chromedriver.exe
@@ -33,6 +33,7 @@ def parseTop500SoloMMR(outputFile):
   firstPage, lastPage = 1, int(href[href.find('=')+1:])
   players = []
   for page in range(firstPage, lastPage+1):
+    time.sleep(0.3)
     print('parsing page ' + str(page) + '...')
     r = requests.get(url, headers=HEADERS, params={'page': page})  
     soup = BeautifulSoup(r.text, features='html.parser')
@@ -222,7 +223,6 @@ def parseTeamLastMatchDate(teamID):
   return date
 
 
-
 # Парсит общее количество сыгранных матчей командой доступных для просмотра
 def parseTeamMatchesRecord(teamID):
   url = 'https://www.dotabuff.com/esports/teams/'
@@ -259,6 +259,8 @@ def parseMatchDetails(matchID):
   div = soup.find('div', {'class': 'team-results'})
   radiant = div.find('section', {'class': 'radiant'}) # блок сил света
   dire = div.find('section', {'class': 'dire'}) # блок сил тьмы
+  if (radiant is None) or (dire is None):
+    raise Exception('Exception: Radiant or Dire block is None!')
   rowsRadiant = radiant.find('article', {'class': 'r-tabbed-table'}).find('tbody').findAll('tr')
   rowsDire = dire.find('article', {'class': 'r-tabbed-table'}).find('tbody').findAll('tr')
   gpm = parseMatchGPM(matchID)
@@ -316,10 +318,22 @@ def parseMatchOverview(teamID, tr):
   loser = (teamID if (winner != teamID) else opponent)
   return matchID, date, duration, winner, loser
 
+
+# Парсит 10 героев, против которых у указанного героя наибольший винрейт за последний год
+def parseHeroCounters(hero):
+  url = 'https://www.dotabuff.com/heroes/'
+  r = requests.get(url + hero + '/counters', params={'date': 'year'}, headers=HEADERS)
+  soup = BeautifulSoup(r.text, features='html.parser')
+  counters = []
+  for tr in soup.find('table', {'class': 'sortable' }).find('tbody').findAll('tr'):
+    # <tr data-link-to="/heroes/earth-spirit"
+    counters.append(tr['data-link-to'].rpartition('/')[2])
+  return counters[len(counters)-10:] # последние 10 героев из списка
+
+
 # main     
 def main():
-  soup, record = parseTeamMatchesRecord('6196091')
-  a = 10
+  parseHeroCounters('alchemist')
   #parseTeamLastMatchDate(1838315)
 
 #main()
