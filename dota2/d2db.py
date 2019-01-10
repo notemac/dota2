@@ -50,9 +50,9 @@ def selectTop500SoloMMR(db):
   return cursor
 
 # Получаем всех героев из таблицы heroes
-def selectHeroes(db, bufferedCursor):
+def selectHeroes(db, isBufferedCursor):
   query = ('SELECT name FROM heroes')
-  cursor = db.cursor(bufferedCursor)
+  cursor = db.cursor(isBufferedCursor)
   cursor.execute(query)
   return cursor
 
@@ -108,9 +108,9 @@ def insertMatch(db, matchDetails):
 
 def insertHeroCounters(db, hero, counters):
   cursor = db.cursor()
-  query = ('INSERT INTO counters (hero, counters) VALUES(%s, %s)')
-  for counter in counters:
-    cursor.execute(query, (hero, counter))
+  query = ('INSERT INTO counters (hero, counters, disadvantage) VALUES(%s, %s, %s)')
+  for (counter, disadvantage) in counters:
+    cursor.execute(query, (hero, counter, disadvantage))
   db.commit()
   cursor.close()
 

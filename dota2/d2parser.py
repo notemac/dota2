@@ -260,7 +260,8 @@ def parseMatchDetails(matchID):
   radiant = div.find('section', {'class': 'radiant'}) # блок сил света
   dire = div.find('section', {'class': 'dire'}) # блок сил тьмы
   if (radiant is None) or (dire is None):
-    raise Exception('Exception: Radiant or Dire block is None!')
+    raise AssertionError('Exception: Radiant or Dire block is None!')
+
   rowsRadiant = radiant.find('article', {'class': 'r-tabbed-table'}).find('tbody').findAll('tr')
   rowsDire = dire.find('article', {'class': 'r-tabbed-table'}).find('tbody').findAll('tr')
   gpm = parseMatchGPM(matchID)
@@ -327,8 +328,12 @@ def parseHeroCounters(hero):
   counters = []
   for tr in soup.find('table', {'class': 'sortable' }).find('tbody').findAll('tr'):
     # <tr data-link-to="/heroes/earth-spirit"
-    counters.append(tr['data-link-to'].rpartition('/')[2])
-  return counters[len(counters)-10:] # последние 10 героев из списка
+    counter = tr['data-link-to'].rpartition('/')[2]
+    # <td data-value="-4.8156" class> //это столбец DISADVANTAGE
+    disadvantage = tr.findAll('td')[2]['data-value']
+    counters.append((counter, float(disadvantage)))
+  #return counters[len(counters)-10:] # последние 10 героев из списка
+  return counters
 
 
 # main     
