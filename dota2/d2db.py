@@ -47,7 +47,11 @@ def selectTop500SoloMMR(db):
   query = ('SELECT player_id FROM top500_solo_mmr')
   cursor = db.cursor()
   cursor.execute(query)
-  return cursor
+  playersID = []
+  for (id,) in cursor:
+    playersID.append(id)
+  cursor.close()
+  return playersID
 
 # Получаем всех героев из таблицы heroes
 def selectHeroes(db, isBufferedCursor):
@@ -89,11 +93,38 @@ def insertTeams(inputFile):
   db.close()
 
 # Получаем все id из таблицы teams
-def selectTeamsIDName(db, bufferedCursor=False):
+def selectTeamsIDName(db, isBufferedCursor=False):
   query = ('SELECT id, name FROM teams')
-  cursor = db.cursor(buffered=bufferedCursor)
+  cursor = db.cursor(buffered=isBufferedCursor)
   cursor.execute(query)
   return cursor
+
+def select(db, tableName, columnNames):
+  query = ('SELECT {} FROM {}'.format(columnNames, tableName))
+  cursor = db.cursor()
+  cursor.execute(query)
+  result = tuple([[] for name in cursor.column_names])
+  for row in cursor:
+    for i in range(0, len(row)):
+      result[i].append(row[i])
+  cursor.close()
+  return result
+
+def isMatchExist(db, matchID):
+  query = ('SELECT COUNT(*) FROM matches WHERE id = {}'.format(matchID))
+  cursor = db.cursor(buffered=True)
+  cursor.execute(query)
+  ((count,),) = cursor
+  cursor.close()
+  return count == 1
+
+def selectTeamLastMatchDate(db, id, isBufferedCursor=True):
+  query = ('SELECT date FROM matches WHERE loser = {} or winner = {} ORDER BY date DESC LIMIT 1'.format(id, id))
+  cursor = db.cursor(buffered=isBufferedCursor)
+  cursor.execute(query)
+  ((date,),) = cursor
+  cursor.close()
+  return str(date)
 
 # Таблица matches содержит инф-цию о матчах
 def insertMatch(db, matchDetails):
@@ -113,6 +144,18 @@ def insertHeroCounters(db, hero, counters):
     cursor.execute(query, (hero, counter, disadvantage))
   db.commit()
   cursor.close()
+
+# Добавление новой команды
+def insertTeam(id, name, founded, popular):
+  db = connectDB()
+  cursor = db.cursor()
+  query = ('INSERT IGNORE INTO teams (id, name, founded, popular) VALUES(%s, %s, %s, %s)')
+  cursor.execute(query, (id, name, founded, 0))
+  db.commit()
+  cursor.close()
+  db.close()
+
+
 
 #insertTeams('./assets/teams9.txt')
 #updateTop500SoloMMR('./assets/top500solommr.txt')

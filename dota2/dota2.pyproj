@@ -26,6 +26,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="d2parser.py" />
+    <Compile Include="d2test.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="d2utils.py">
       <SubType>Code</SubType>
     </Compile>

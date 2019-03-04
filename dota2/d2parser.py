@@ -6,7 +6,44 @@ from bs4 import BeautifulSoup
 from selenium import webdriver 
 
 # Задаем user-agent, чтобы обойти защиту на сервере от анонимных запросов
-HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'}
+#HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'}
+HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0'}
+
+# Парсит общее количество сыгранных матчей командой
+def parseMatchDetailsOpendota(matchID):
+  url = 'https://api.opendota.com/api/matches/'
+  r = requests.get(url + str(matchID), headers=HEADERS)
+  return r.text
+
+def parseUserAgents():
+  from fake_useragent import UserAgent
+  ua = UserAgent()
+  agents = []
+  for i in range(0, 500):
+    agent = ua.random
+    if agent not in agents:
+      agents.append(agent)
+  with open('./assets/ua.txt', mode='w', encoding='utf-8') as file:
+    for agent in agents:
+      file.write(agent + '\n')
+  
+
+def parseProxies():
+  url = 'https://free-proxy-list.net/'
+  r = requests.get(url, headers=HEADERS)
+  soup = BeautifulSoup(r.text, features='html.parser')
+  table = soup.find('table', {'class': 'table table-striped table-bordered'})
+  with open('./assets/proxies.txt', mode='w', encoding='utf-8') as file:
+    for tr in table.tbody.findAll('tr'):
+      #Пропускаем transparent proxy
+      if tr.contents[4].text == 'transparent':
+        continue
+      http = 'http'
+      if tr.contents[6].text == 'yes':
+        http = 'https'
+      file.write('{} {}://{}:{}\n'.format(http, http, tr.contents[0].text, tr.contents[1].text))
+
+
 
 # Парсит имена геров c www.dotabuff.com в outputFile
 def parseHeroes(outputFile):
@@ -233,9 +270,9 @@ def parseTeamMatchesRecord(teamID):
   return record
 
 # Парсит Gold Per Minute для обеих команд в матче
-def parseMatchGPM(matchID):
+def parseMatchGPM(matchID, proxy, header):
   url = 'https://www.dotabuff.com/matches/'
-  r = requests.get(url + str(matchID) + '/farm', headers=HEADERS)
+  r = requests.get(url + str(matchID) + '/farm', proxies=proxy, headers=header)
   soup = BeautifulSoup(r.text, features='html.parser')
   if 'Not Found' in soup.html.head.title.text:
     return ['0', '0']
@@ -251,20 +288,26 @@ def parseMatchGPM(matchID):
   gpm2 =  tr.contents[5].contents[0].replace(',', '')
   return [gpm1, gpm2]
 
-def parseMatchDetails(matchID):
+def parseMatchDetails(matchID, proxy, header):
   url = 'https://www.dotabuff.com/matches/'
-  r = requests.get(url + str(matchID), headers=HEADERS)
+  #timeout для того, чтобы не зависало на подключении к прокси
+  r = requests.get(url + str(matchID), proxies=proxy, headers=header, timeout=20)
   soup = BeautifulSoup(r.text, features='html.parser')
+  #print(soup)
   # блок с данными о матче
   div = soup.find('div', {'class': 'team-results'})
   radiant = div.find('section', {'class': 'radiant'}) # блок сил света
   dire = div.find('section', {'class': 'dire'}) # блок сил тьмы
   if (radiant is None) or (dire is None):
     raise AssertionError('Exception: Radiant or Dire block is None!')
-
-  rowsRadiant = radiant.find('article', {'class': 'r-tabbed-table'}).find('tbody').findAll('tr')
-  rowsDire = dire.find('article', {'class': 'r-tabbed-table'}).find('tbody').findAll('tr')
-  gpm = parseMatchGPM(matchID)
+  rowsRadiant = radiant.find('article', {'class': 'r-tabbed-table'})
+  rowsDire = dire.find('article', {'class': 'r-tabbed-table'})
+  if (rowsRadiant is None) or (rowsDire is None):
+    raise AssertionError('Exception: Radiant or Dire block is None!')
+  rowsRadiant = rowsRadiant.find('tbody').findAll('tr')
+  rowsDire = rowsDire.find('tbody').findAll('tr')
+  time.sleep(1.7)
+  gpm = parseMatchGPM(matchID, proxy, header)
   wplayers, lplayers, wheroes, lheroes = [], [], [], []
   if len(radiant.header.contents) > 1: #значит силы света победили
     wgpm, lgpm = gpm[0], gpm[1]
